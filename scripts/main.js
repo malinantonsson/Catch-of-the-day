@@ -1,11 +1,8 @@
-const React = require('react');
-const ReactDOM = require('react-dom');
+import React from 'react'
+import { render } from 'react-dom'
+import { Router, Route, Link } from 'react-router'
+import createBrowserHistory from 'history/lib/createBrowserHistory'
 
-// router
-const ReactRouter = require('react-router');
-const Router = ReactRouter.Router;
-const Route = ReactRouter.Route;
-const Navigation = ReactRouter.Navigation;
 /* 
     App
     <app/>
@@ -103,20 +100,17 @@ var StorePicker = React.createClass({
 /* 
     Routes
 */
-/*
-var routes = (
-    <Router>
-        <Router path="/" component={StorePicker} />
-        <Router path="/store/:storeId" component={App} />
-    </Router>
-)
 
-ReactDOM.render(<routes/>, document.querySelector('#main'));*/
 
 render((
-  <Router>
+  <Router history={createBrowserHistory()}>
+    <Route path="/store" component={App}>
+        <Route path="/:storeid" component={App} />
+    </Route>
     <Route path="/" component={StorePicker}>
-      <Router path="/store/:storeId" component={App} />
+      <Route path="store/" component={App}>
+        <Route path=":storeid" component={App} />
+      </Route>
     </Route>
   </Router>
 ), document.querySelector('#main'))
