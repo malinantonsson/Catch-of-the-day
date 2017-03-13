@@ -1,14 +1,36 @@
-import React from 'react'
-import { render } from 'react-dom'
-import { Router, Route, Link } from 'react-router'
-import createBrowserHistory from 'history/lib/createBrowserHistory'
 
+const React = require('react');
+const ReactDOM = require('react-dom');
+
+// router
+const ReactRouter = require('react-router');
+const Router = ReactRouter.Router;
+const Route = ReactRouter.Route;
+const Navigation = ReactRouter.Navigation;
+const History = ReactRouter.History;
+
+const createBrowserHistory = require('history/lib/createBrowserHistory');
+
+const h = require('./helpers');
 /* 
     App
     <app/>
 */
 
 var App = React.createClass({
+    getInitialState: function() {
+        return {
+            fishes: {},
+            order: {}
+        }
+    },
+    addFish: function(fish) {
+        const timestamp = (new Date()).getTime();
+        //update state object
+        this.state.fishes[`fish-${timestamp}`] = fish;
+        //set the state
+        this.setState({ fishes: this.state.fishes });
+    },
 
     render: function() {
         return (
@@ -17,12 +39,57 @@ var App = React.createClass({
                     <Header tagline="Fresh Seafood Market" />
                 </div>
                 <Order/>
-                <Inventory/>
+                <Inventory addFish={this.addFish}/>
             </div>
         )
     }
 });
 
+/* 
+    Add fish Form
+    <AddFishForm/>
+*/
+
+var AddFishForm = React.createClass({
+
+    createFish: function(event){
+        //stop the form from submitting
+        event.preventDefault();
+
+        //Take the data from the form
+        const fish = {
+            name: this.refs.name.value,
+            price: this.refs.price.value,
+            status: this.refs.status.value,
+            desc: this.refs.desc.value,
+            image: this.refs.image.value
+
+        }
+        
+        //Add the fish to the app state
+        this.props.addFish(fish);
+        this.refs.fishForm.reset();
+    },
+
+    render: function() {
+        return (
+            <form ref="fishForm" className="fish-edit" onSubmit={this.createFish.bind(this)}>
+                <input type="text" ref="name" placeholder="Fish Name"/>
+                <input type="text" ref="price" placeholder="Fish price"/>
+
+                <select ref="status">
+                    <option value="available">Fresh!</option>
+                    <option value="unavailable">Sold Out!</option>
+                </select>
+
+                <textarea type="text" ref="desc" placeholder="Desc"></textarea>
+                <input type="text" ref="image" placeholder="URL to image"/>
+                <button type="submit">+ Add Item</button>
+
+            </form>
+        )
+    }
+});
 
 /* 
     Header
@@ -56,7 +123,10 @@ var Inventory = React.createClass({
 
     render: function() {
         return (
-             <p>Inventory</p>
+            <div>
+                <h2>Inventory</h2>
+                <AddFishForm {...this.props}/>
+            </div>
         )
     }
 });
@@ -75,6 +145,20 @@ var Order = React.createClass({
     }
 });
 
+/* 
+    Not found
+    <Not found/>
+*/
+
+var NotFound = React.createClass({
+
+    render: function() {
+        return (
+             <p>Not found</p>
+        )
+    }
+});
+
 
 
 /* 
@@ -83,14 +167,22 @@ var Order = React.createClass({
 */
 
 var StorePicker = React.createClass({
+    mixins: [History],
+    goToStore: function(event) {
+        event.preventDefault();
+        //get the data from the input
+        var storeId = this.refs.storeId.value;
+        //Transition to App component
+        this.history.pushState(null, `/store/${storeId}`);
+    },
 
     render: function() {
         var name = "malin";
         return (
-            <form className="store-selector">
+            <form className="store-selector" onSubmit={this.goToStore}>
                 {/* this is a comment */}
                 <h2>Please enter a store {name}</h2>
-                <input type="text" ref="storeId" required />
+                <input type="text" ref="storeId" defaultValue={h.getFunName()} required />
                 <input type="Submit" />
             </form>
         )
@@ -101,16 +193,12 @@ var StorePicker = React.createClass({
     Routes
 */
 
+var routes = (
+    <Router history={createBrowserHistory()}>
+        <Route path="/" component={StorePicker} />
+        <Route path="/store/:storeId" component={App} />
+        <Route path="*" component={NotFound} />
+    </Router>
+);
 
-render((
-  <Router history={createBrowserHistory()}>
-    <Route path="/store" component={App}>
-        <Route path="/:storeid" component={App} />
-    </Route>
-    <Route path="/" component={StorePicker}>
-      <Route path="store/" component={App}>
-        <Route path=":storeid" component={App} />
-      </Route>
-    </Route>
-  </Router>
-), document.querySelector('#main'))
+ReactDOM.render(routes, document.querySelector('#main'));
