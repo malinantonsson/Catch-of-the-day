@@ -12,6 +12,15 @@ const History = ReactRouter.History;
 const createBrowserHistory = require('history/lib/createBrowserHistory');
 
 const h = require('./helpers');
+
+const Rebase = require('re-base');
+var base = Rebase.createClass({
+        apiKey: "AIzaSyA7gOdQsDVKzVi9ufqyEgmCBAdcNzSuX_Q",
+        authDomain: "catch-of-the-day-b3ddc.firebaseapp.com",
+        databaseURL: "https://catch-of-the-day-b3ddc.firebaseio.com",
+        storageBucket: "catch-of-the-day-b3ddc.appspot.com",
+        messagingSenderId: "299066285905"
+    }, 'catchOfTheDay');
 /* 
     App
     <app/>
@@ -24,6 +33,15 @@ var App = React.createClass({
             order: {}
         }
     },
+
+    componentDidMount: function() {
+        //what path are we syncing? param 1 
+        base.syncState(`${this.props.params.storeId}/fishes`, {
+            context: this,
+            state: 'fishes'
+        });
+    },
+
     addFish: function(fish) {
         const timestamp = (new Date()).getTime();
         //update state object
@@ -38,7 +56,6 @@ var App = React.createClass({
     },
 
     loadSamples: function() {
-
         this.setState({
             fishes: require('./sample-fishes')
         });
