@@ -13,6 +13,8 @@ const createBrowserHistory = require('history/lib/createBrowserHistory');
 
 const h = require('./helpers');
 
+const Catalyst = require('react-catalyst');
+
 const Rebase = require('re-base');
 var base = Rebase.createClass({
         apiKey: "AIzaSyA7gOdQsDVKzVi9ufqyEgmCBAdcNzSuX_Q",
@@ -27,6 +29,7 @@ var base = Rebase.createClass({
 */
 
 var App = React.createClass({
+    mixins: [Catalyst.LinkedStateMixin],
     getInitialState: function() {
         return {
             fishes: {},
@@ -86,7 +89,7 @@ var App = React.createClass({
                     </ul>
                 </div>
                 <Order fishes={this.state.fishes} order={this.state.order} />
-                <Inventory addFish={this.addFish} loadSamples={this.loadSamples} />
+                <Inventory addFish={this.addFish} loadSamples={this.loadSamples} fishes={this.state.fishes} linkState={this.linkState} />
             </div>
         )
     }
@@ -191,18 +194,50 @@ var Header = React.createClass({
     }
 });
 
+var EditFishForm = React.createClass({
+
+    render: function() {
+        var key = this.props.valueKey;
+        var linkState = this.props.linkState;
+        return (
+            <div className="fish-edit">
+                <input type="text" valueLink={linkState(`fishes.${key}.name`)} />
+                <input type="text" valueLink={linkState(`fishes.${key}.price`)} />
+
+                <select valueLink={linkState(`fishes.${key}.status`)} >
+                    <option value="available">Fresh!</option>
+                    <option value="unavailable">Sold Out!</option>
+                </select>
+
+                <textarea type="text" valueLink={linkState(`fishes.${key}.desc`)} ></textarea>
+                <input type="text" valueLink={linkState(`fishes.${key}.image`)} />
+                <button>Remove Fish</button>
+            </div>
+        )
+    }
+});
 
 /* 
     Inventory
     <Inventory/>
+    <div className="fish-edit" key={key}>
+                <input type="text" valueLink={linkState(`fishes.${key}.name`)} />
+            </div>
 */
 
 var Inventory = React.createClass({
+    renderInventory: function(key) {
+        var linkState = this.props.linkState;
+        return (
+            <EditFishForm key={key} linkState={linkState} valueKey={key} fishes={this.props.fishes} />  
+        )
+    },
 
     render: function() {
         return (
             <div>
                 <h2>Inventory</h2>
+                {Object.keys(this.props.fishes).map(this.renderInventory)}
                 <AddFishForm {...this.props}/>
 
                 <button onClick={this.props.loadSamples}>Load sample fishes</button>
@@ -225,7 +260,7 @@ var Order = React.createClass({
             return <li key={key}>Sorry, fish no longer available!</li>
         }
         return (
-            <li>
+            <li key={key}>
                 <span>{count}</span>lbs 
                 {fish.name}
                 <span className="price">{h.formatPrice(count * fish.price)}</span>
